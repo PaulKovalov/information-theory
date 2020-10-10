@@ -3,29 +3,34 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
-#include <cassert>
+#include <list>
+#include <vector>
+#include <limits>
+#include <bitset>
 
 using namespace std;
-int NUM_OF_CHARS = 256;
+int NUM_OF_CHARS = 128; // consider all ASCII characters
 
 /**
- * Separate table class to encapsulate implementation. If I want to use Trie for storing table instead of plain
- * unordered map, will just change implementation here
+ * Separate table class to encapsulate implementation.
  **/
 class Table {
-    unordered_map<string, int> table;
-    // initializes the table
+    struct Trie {
+        // better to use unique_ptr, but performance may degrade
+        // TODO research this
+        unordered_map<char, Trie*> data;
+        int v;
+        Trie(int v = -1):v(v) {};
+    };
+    Trie *root;
+    int size = 0;
+    int CHAR_MIN = static_cast<int>(numeric_limits<char>::min());
    public:
-    Table(char* file_data, int file_length) {
-        // prepare chars array
-        char* file_chars = new char[NUM_OF_CHARS];
-        memset(file_chars, 0, NUM_OF_CHARS);
-        for (int i = 0; i < file_length; ++i) {
-            if (file_chars[file_data[i] + 128] == 0) {
-                file_chars[file_data[i] + 128] = 1;
-                table[string(1, file_data[i])] = table.size();
-            }
+    Table() {
+        root = new Trie();
+        // generate all possible ascii chars - initial alphabet used for encoding & decoding
+        for (int i = 0; i < NUM_OF_CHARS; ++i) {
+            root->data[char(i)] = new Trie(size++);
         }
     }
 
@@ -34,18 +39,22 @@ class Table {
      * returns its value. Otherwise inserts the word and returns the value of the
      * existing prefix of the word and the length of the prefix that exists
      **/
-    pair<int,int> get_or_insert(string word) {
-        string word_copy = word;
-        while (word_copy.size() && table.find(word_copy) == table.end()) {
-            word_copy.pop_back();
+    pair<int,int> get_prefix_and_insert(char *file_data, int start, int end) {
+        Trie* t_root = root;
+        pair<int, int> ans;
+        int common_prefix_length = 0; // the length of the existing prefix of the word stored in the trie
+        for (int i = start; i < end; ++i) {
+            char c = file_data[i];
+            if (t_root->data[c]) {
+                t_root = t_root->data[c];
+                ++common_prefix_length;
+            } else {
+                // no such char, return current node value and insert word in a trie
+                t_root->data[c] = new Trie(size++);
+                break;
+            }
         }
-        // if word is not in the table, it means its size was reduced. Insert word in the table then, but return the 
-        // value of the found prefix
-        if (word_copy.size() != word.size()) {
-            table[word] = table.size();
-        }
-        // first is value in the table, second is the length of the matched prefix
-        return {table[word_copy], word_copy.size()};
+        return {t_root->v, common_prefix_length};
     }
 };
 
@@ -73,8 +82,19 @@ int main(int argc, char* argv[]) {
     
     if (mode == "e") {
         // encode data
-        Table t(file_data, file_length);
-
+        vector<int> encoded;
+        // create table (prefix tree)
+        Table table;
+        int front = 0;
+        while (front < file_length) {
+            pair<int, int> prefix = table.get_prefix_and_insert(file_data, front, file_length);
+            encoded.push_back(prefix.first);
+            front += prefix.second + 1;
+        }
+        for (int i = 0; i < encoded.size(); ++i) {
+            cout << encoded[i] << " ";
+        }
+        cout << endl;
     } else if (mode == "d") {
         // decode data
     } else {
