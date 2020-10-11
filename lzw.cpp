@@ -1,15 +1,16 @@
+#include <cmath>
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <unordered_map>
-#include <list>
 #include <vector>
-#include <limits>
-#include <bitset>
 
 using namespace std;
-int NUM_OF_CHARS = 128; // consider all ASCII characters
+
+int NUM_OF_CHARS = 128;  // consider all ASCII characters
+int powers_of_two[] = {1, 2, 4, 8, 16, 32, 64, 128};
 
 /**
  * Separate table class to encapsulate implementation.
@@ -20,11 +21,12 @@ class Table {
         // TODO research this
         unordered_map<char, Trie*> data;
         int v;
-        Trie(int v = -1):v(v) {};
+        Trie(int v = -1) : v(v){};
     };
-    Trie *root;
+    Trie* root;
     int size = 0;
     int CHAR_MIN = static_cast<int>(numeric_limits<char>::min());
+
    public:
     Table() {
         root = new Trie();
@@ -39,10 +41,10 @@ class Table {
      * returns its value. Otherwise inserts the word and returns the value of the
      * existing prefix of the word and the length of the prefix that exists
      **/
-    pair<int,int> get_prefix_and_insert(char *file_data, int start, int end) {
+    pair<int, int> get_prefix_and_insert(char* file_data, int start, int end) {
         Trie* t_root = root;
         pair<int, int> ans;
-        int common_prefix_length = 0; // the length of the existing prefix of the word stored in the trie
+        int common_prefix_length = 0;  // the length of the existing prefix of the word stored in the trie
         for (int i = start; i < end; ++i) {
             char c = file_data[i];
             if (t_root->data[c]) {
@@ -58,6 +60,15 @@ class Table {
     }
 };
 
+char bits_to_char(vector<char>& bits, int start) {
+    char r = 0;
+    int to = min((int)bits.size(), start + 8);
+    for (int i = start; i < to; ++i) {
+        r += (bits[i] == '1' ? powers_of_two[i - start] : 0);
+    }
+    return r;
+}
+
 int main(int argc, char* argv[]) {
     if (argc != 3) {
         cout << "Usage: ./lzw <e/d> <file to encode/decode>" << endl;
@@ -67,11 +78,11 @@ int main(int argc, char* argv[]) {
     string filename = argv[2];
     // read file which needs to be processed
     ifstream fin(filename);
-    fin.tie(nullptr);
     if (!fin.is_open()) {
         cout << "Error opening file" << endl;
         return 0;
     }
+    fin.tie(nullptr);
     // get length of file:
     fin.seekg(0, fin.end);
     int file_length = fin.tellg();
@@ -79,22 +90,40 @@ int main(int argc, char* argv[]) {
     char* file_data = new char[file_length];
     // read file
     fin.read(file_data, file_length);
-    
+
     if (mode == "e") {
         // encode data
-        vector<int> encoded;
+        vector<char> bits;
         // create table (prefix tree)
         Table table;
         int front = 0;
         while (front < file_length) {
             pair<int, int> prefix = table.get_prefix_and_insert(file_data, front, file_length);
-            encoded.push_back(prefix.first);
+            // convert numbers to bits
+            int n = prefix.first;
+            // convert number to bits
+            vector<char> n_bits;
+            while (n) {
+                n_bits.push_back('0' + (n % 2));
+                n /= 2;
+            }
+            // align bits if the number of bits is less then 7
+            for (int i = 0; i < 7 - static_cast<int>(n_bits.size()); ++i) {
+                bits.push_back('0');
+            }
+            // copy n_bits to bits
+            bits.insert(bits.end(), n_bits.begin(), n_bits.end());
+            // advance front pointer
             front += prefix.second + 1;
         }
-        for (int i = 0; i < encoded.size(); ++i) {
-            cout << encoded[i] << " ";
+        ofstream out("enc.txt");
+        // TODO research here, maybe need to call tie to improve performance
+        // write bits to file
+        for (int i = 0; i < bits.size(); i += 8) {
+            // convert 8 bits to one char
+            out << bits_to_char(bits, i);
         }
-        cout << endl;
+
     } else if (mode == "d") {
         // decode data
     } else {
