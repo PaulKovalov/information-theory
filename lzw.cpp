@@ -27,7 +27,6 @@ class Table {
     };
     Trie* root;
     int size = 0;
-    int CHAR_MIN = static_cast<int>(numeric_limits<char>::min());
 
    public:
    /**
@@ -54,7 +53,6 @@ class Table {
      **/
     pair<int, int> get_prefix_and_insert(char* data, int start, int end) {
         Trie* t_root = root;
-        pair<int, int> ans;
         int common_prefix_length = 0;  // the length of the existing prefix of the word stored in the trie
         for (int i = start; i < end; ++i) {
             char c = data[i];
@@ -127,17 +125,15 @@ int main(int argc, char* argv[]) {
         vector<char> bits;
         // create table (prefix tree)
         Table table(MODE_ENCODE);
-        int front = 0, bits_per_number = 8, current_max_number = 256;
-        int nums_total = 0;
+        int front = 0, bits_per_number = 8, current_dict_capacity = 256;
         while (front + 1 < file_length) {
             pair<int, int> prefix = table.get_prefix_and_insert(file_data, front, file_length);
-            if (table.get_size() == current_max_number) {
+            if (table.get_size() == current_dict_capacity) {
                 bits_per_number++;
-                current_max_number *= 2;
+                current_dict_capacity *= 2;
             }
             // convert numbers to bits
             int n = prefix.first;
-            ++nums_total;
             // convert number to bits
             vector<char> n_bits;
             while (n) {
@@ -172,12 +168,11 @@ int main(int argc, char* argv[]) {
         while (start < bits.size()) {
             // read bits_per_number_bits from the stream and convert them to the number
             if (codes.size() + NUM_OF_CHARS == current_max_number - 1) {
-                // increase bit length
+                // increase bit length if table is full
                 bits_per_number++;
                 current_max_number *= 2;
             }
-            int current_code = bits_to_int(bits, start, bits_per_number);
-            codes.push_back(current_code);
+            codes.push_back(bits_to_int(bits, start, bits_per_number));
             start += bits_per_number;
         }
     } else {
