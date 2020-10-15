@@ -11,7 +11,6 @@
 using namespace std;
 
 int NUM_OF_CHARS = 128;  // consider all ASCII characters
-int powers_of_two[] = {1, 2, 4, 8, 16, 32, 64, 128};
 int MODE_ENCODE = 0;
 int MODE_DECODE = 1;
 
@@ -76,11 +75,13 @@ class Table {
     }
 };
 
-int bits_to_int(vector<char>& bits, int start, int bits_per_number) {
+int bits_to_int(vector<char>& bits, int start, int bits_per_int) {
     int r = 0;
-    int to = min((int)bits.size(), start + bits_per_number);
+    int to = min((int)bits.size(), start + bits_per_int);
+    int current_power_of_two = 1;
     for (int i = start; i < to; ++i) {
-        r += (bits[i] == '1' ? powers_of_two[i - start] : 0);
+        r += (bits[i] == '1' ? current_power_of_two : 0);
+        current_power_of_two *= 2;
     }
     return r;
 }
@@ -98,17 +99,6 @@ vector<char> char_to_bits(char& c) {
     }
     return bits;
 }
-
-bool is_power_of_two(int n) {
-    if (n == 0)
-        return false;
-    if (n == 1)
-        return true;
-    if (n % 2 == 0)
-        return is_power_of_two(n / 2);
-    return false;
-}
-
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
@@ -147,7 +137,6 @@ int main(int argc, char* argv[]) {
             }
             // convert numbers to bits
             int n = prefix.first;
-            cout << n << " ";
             ++nums_total;
             // convert number to bits
             vector<char> n_bits;
@@ -162,10 +151,9 @@ int main(int argc, char* argv[]) {
             // advance front pointer
             front += prefix.second;
         }
-        cout << endl;
         ofstream out("enc.txt");
-        int bits_per_char = 8;
         // TODO research here, maybe need to call tie to improve performance
+        int bits_per_char = 8;
         // write bits to file
         for (int i = 0; i < bits.size(); i += bits_per_char) {
             // convert 8 bits to one char
@@ -183,18 +171,15 @@ int main(int argc, char* argv[]) {
         vector<int> codes;
         while (start < bits.size()) {
             // read bits_per_number_bits from the stream and convert them to the number
-            if (codes.size() == current_max_number) {
+            if (codes.size() + NUM_OF_CHARS == current_max_number - 1) {
                 // increase bit length
                 bits_per_number++;
                 current_max_number *= 2;
             }
-            codes.push_back(bits_to_int(bits, start, bits_per_number));
+            int current_code = bits_to_int(bits, start, bits_per_number);
+            codes.push_back(current_code);
             start += bits_per_number;
         }
-        for (int i = 0; i < codes.size(); ++i) {
-            cout << codes[i] << " ";
-        }
-        cout << endl;
     } else {
         cout << "Mode must be either \"e\" or \"d\"" << endl;
         return 0;
