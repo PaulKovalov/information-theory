@@ -161,25 +161,23 @@ int main(int argc, char* argv[]) {
         for (int i = 0; i < NUM_OF_CHARS; ++i) {
             table[i] = string(1, static_cast<char>(i));
         }
-        string decoded = "";
+        // open file dec.txt and write result there
+        ofstream out("dec.txt");
         int code = codes[0], old_code;
-        decoded += table[code];
+        out << table[code];
         old_code = code;
         for (int i = 1; i < codes.size(); ++i) {
             code = codes[i];
             // code is in the initial dictionary
             if (table.find(code) != table.end()) {
-                decoded += table[code];
+                out << table[code];
                 table[table.size()] = table[old_code] + string(1, table[code][0]);
             } else {
                 table[code] = table[old_code] + string(1, table[old_code][0]);
-                decoded += table[code];
+                out << table[code];
             }
             old_code = code;
         }
-        // open file dec.txt and write result there
-        ofstream out("dec.txt");
-        out << decoded;
         out.close();
     } else {
         cout << "Mode must be either \"e\" or \"d\"" << endl;
