@@ -76,20 +76,6 @@ int bits_to_int(vector<char>& bits, int start, int bits_per_int) {
     return r;
 }
 
-vector<char> char_to_bits(char& c) {
-    int r = c;
-    if (r < 0) {
-        r += 256;
-    }
-    // char encodes 8 bits
-    vector<char> bits(8);
-    for (int i = 0; i < 8; ++i) {
-        bits[i] = ('0' + (r % 2));
-        r /= 2;
-    }
-    return bits;
-}
-
 int main(int argc, char* argv[]) {
     if (argc != 3) {
         cout << "Usage: ./lzw <e/d> <file to encode/decode>" << endl;
@@ -126,17 +112,15 @@ int main(int argc, char* argv[]) {
                 current_dict_capacity *= 2;
             }
             // convert numbers to bits
-            int n = prefix.first;
+            int n = prefix.first, inserted = 0;
             // convert number to bits
-            vector<char> n_bits;
             while (n) {
-                n_bits.push_back('0' + (n % 2));
+                bits.push_back('0' + (n % 2));
                 n /= 2;
+                ++inserted;
             }
-            // copy n_bits to bits
-            bits.insert(bits.end(), n_bits.begin(), n_bits.end());
             // align bits if their number is less then bits_per_number
-            bits.insert(bits.end(), max(0, bits_per_number - static_cast<int>(n_bits.size())), '0');
+            bits.insert(bits.end(), max(0, bits_per_number - inserted), '0');
             // advance front pointer
             front += prefix.second;
         }
@@ -152,8 +136,14 @@ int main(int argc, char* argv[]) {
         vector<char> bits;
         // convert chars in file to a bit array
         for (int i = 0; i < file_length; ++i) {
-            vector<char> c_bits = char_to_bits(file_data[i]);
-            bits.insert(bits.end(), c_bits.begin(), c_bits.end());
+            int r = file_data[i];
+            if (r < 0) {
+                r += 256;
+            }
+            for (int i = 0; i < 8; ++i) {
+                bits.push_back(('0' + (r % 2)));
+                r /= 2;
+            }
         }
         // convert bits to vector of ints
         int bits_per_number = 8, start = 0, current_max_number = 256;
