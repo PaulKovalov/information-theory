@@ -11,8 +11,6 @@
 using namespace std;
 
 int NUM_OF_CHARS = 128;  // consider all ASCII characters
-int MODE_ENCODE = 0;
-int MODE_DECODE = 1;
 
 /**
  * Separate table class to encapsulate implementation.
@@ -32,17 +30,11 @@ class Table {
     /**
     * Constructs initial table. Depending on mode, maps chars to numbers or vice versa
     * */
-    Table(int mode) {
+    Table() {
         root = new Trie();
-        if (mode == MODE_ENCODE) {
-            // generate all possible ascii chars - initial alphabet used for encoding & decoding
-            for (int i = 0; i < NUM_OF_CHARS; ++i) {
-                root->data[i] = new Trie(size++);
-            }
-        } else if (mode == MODE_DECODE) {
-            for (int i = 0; i < NUM_OF_CHARS; ++i) {
-                // todo
-            }
+        // generate all possible ascii chars - initial alphabet used for encoding & decoding
+        for (int i = 0; i < NUM_OF_CHARS; ++i) {
+            root->data[i] = new Trie(size++);
         }
     }
 
@@ -125,7 +117,7 @@ int main(int argc, char* argv[]) {
         // encode data
         vector<char> bits;
         // create table (prefix tree)
-        Table table(MODE_ENCODE);
+        Table table;
         int front = 0, bits_per_number = 8, current_dict_capacity = 256;
         while (front + 1 < file_length) {
             pair<int, int> prefix = table.get_prefix_and_insert(file_data, front, file_length);
