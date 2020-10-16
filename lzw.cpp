@@ -26,7 +26,7 @@ class Table {
 
    public:
     /**
-    * Constructs initial table. Depending on mode, maps chars to numbers or vice versa
+    * Constructs initial table
     * */
     Table() {
         root = new Trie();
