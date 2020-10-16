@@ -141,7 +141,6 @@ int main(int argc, char* argv[]) {
             front += prefix.second;
         }
         ofstream out("enc.txt");
-        // TODO research here, maybe need to call tie to improve performance
         int bits_per_char = 8;
         // write bits to file
         for (int i = 0; i < bits.size(); i += bits_per_char) {
