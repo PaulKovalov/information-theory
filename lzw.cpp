@@ -2,10 +2,8 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <limits>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 using namespace std;
@@ -67,7 +65,7 @@ class Table {
 
 int bits_to_int(vector<char>& bits, int start, int bits_per_int) {
     int r = 0;
-    int to = min((int)bits.size(), start + bits_per_int);
+    int to = min(static_cast<int>(bits.size()), start + bits_per_int);
     int current_power_of_two = 1;
     for (int i = start; i < to; ++i) {
         r += (bits[i] == '1' ? current_power_of_two : 0);
@@ -172,8 +170,7 @@ int main(int argc, char* argv[]) {
             // code is in the initial dictionary
             if (table.find(code) != table.end()) {
                 decoded += table[code];
-                string new_table_entry = table[old_code] + string(1, table[code][0]);
-                table[table.size()] = new_table_entry;
+                table[table.size()] = table[old_code] + string(1, table[code][0]);
             } else {
                 table[code] = table[old_code] + string(1, table[old_code][0]);
                 decoded += table[code];
@@ -188,5 +185,6 @@ int main(int argc, char* argv[]) {
         cout << "Mode must be either \"e\" or \"d\"" << endl;
         return 0;
     }
+    delete[] file_data;
     return 0;
 }
