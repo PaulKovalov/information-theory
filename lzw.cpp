@@ -5,8 +5,8 @@
 #include <limits>
 #include <string>
 #include <unordered_map>
-#include <vector>
 #include <unordered_set>
+#include <vector>
 
 using namespace std;
 
@@ -29,7 +29,7 @@ class Table {
     int size = 0;
 
    public:
-   /**
+    /**
     * Constructs initial table. Depending on mode, maps chars to numbers or vice versa
     * */
     Table(int mode) {
@@ -119,6 +119,7 @@ int main(int argc, char* argv[]) {
     char* file_data = new char[file_length];
     // read file
     fin.read(file_data, file_length);
+    fin.close();
 
     if (mode == "e") {
         // encode data
@@ -155,6 +156,7 @@ int main(int argc, char* argv[]) {
             // convert 8 bits to one char
             out << static_cast<char>(bits_to_int(bits, i, bits_per_char));
         }
+        out.close();
     } else if (mode == "d") {
         vector<char> bits;
         // convert chars in file to a bit array
@@ -162,7 +164,7 @@ int main(int argc, char* argv[]) {
             vector<char> c_bits = char_to_bits(file_data[i]);
             bits.insert(bits.end(), c_bits.begin(), c_bits.end());
         }
-        // convert this to vector of ints
+        // convert bits to vector of ints
         int bits_per_number = 8, start = 0, current_max_number = 256;
         vector<int> codes;
         while (start < bits.size()) {
@@ -175,6 +177,32 @@ int main(int argc, char* argv[]) {
             codes.push_back(bits_to_int(bits, start, bits_per_number));
             start += bits_per_number;
         }
+        // generate initial table
+        unordered_map<int, string> table;
+        for (int i = 0; i < NUM_OF_CHARS; ++i) {
+            table[i] = string(1, static_cast<char>(i));
+        }
+        string decoded = "";
+        int code = codes[0], old_code;
+        decoded += table[code];
+        old_code = code;
+        for (int i = 1; i < codes.size(); ++i) {
+            code = codes[i];
+            // code is in the initial dictionary
+            if (table.find(code) != table.end()) {
+                decoded += table[code];
+                string new_table_entry = table[old_code] + string(1, table[code][0]);
+                table[table.size()] = new_table_entry;
+            } else {
+                table[code] = table[old_code] + string(1, table[old_code][0]);
+                decoded += table[code];
+            }
+            old_code = code;
+        }
+        // open file dec.txt and write result there
+        ofstream out("dec.txt");
+        out << decoded;
+        out.close();
     } else {
         cout << "Mode must be either \"e\" or \"d\"" << endl;
         return 0;
