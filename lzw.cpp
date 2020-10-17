@@ -181,7 +181,6 @@ int main(int argc, char* argv[]) {
         out.close();
     } else {
         cout << "Mode must be either \"e\" or \"d\"" << endl;
-        return 0;
     }
     delete[] file_data;
     return 0;
