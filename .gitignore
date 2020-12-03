@@ -3,3 +3,4 @@ infth.code-workspace
 main
 huffman
 txt_test_files/
+*.txt
