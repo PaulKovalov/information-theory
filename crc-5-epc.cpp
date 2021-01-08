@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
         bits.push_back(argv[2][i] - '0');
     }
     vector<char> polynomial = {1, 0, 1, 0, 1};
-    int k_zeros = polynomial.size() - 1;  // number of zeros is determined by the generating polynomial
+    int k_zeros = polynomial.size();  // number of zeros is determined by the generating polynomial
 
     if (mode == "e") {
         bits.insert(bits.end(), k_zeros, 0);
